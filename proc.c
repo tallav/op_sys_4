@@ -111,7 +111,7 @@ found:
   p->context = (struct context*)sp;
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
-
+  procfs_add_proc(p->pid, "/");
   return p;
 }
 
@@ -263,6 +263,7 @@ exit(void)
 
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
+  procfs_remove_proc(curproc->pid);
   sched();
   panic("zombie exit");
 }

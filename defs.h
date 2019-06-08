@@ -123,6 +123,12 @@ void            yield(void);
 
 // procfs.c
 void            procfsinit(void);
+void            procfs_add_proc(int pid, char* cwd);
+void            procfs_remove_proc(int pid);
+int             read_path_level_0(struct inode *ip, char *dst, int off, int n);
+int             read_path_level_1(struct inode *ip, char *dst, int off, int n);
+int             read_path_level_2(struct inode *ip, char *dst, int off, int n);
+int             read_path_level_3(struct inode *ip, char *dst, int off, int n);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
