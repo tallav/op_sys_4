@@ -112,6 +112,8 @@ found:
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
 
+  procfs_add_proc(p->pid, "/");
+
   return p;
 }
 
@@ -263,6 +265,7 @@ exit(void)
 
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
+  procfs_remove_proc(curproc->pid);
   sched();
   panic("zombie exit");
 }
@@ -531,4 +534,14 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+
+struct proc* find_proc_by_pid(int pid) {
+  struct proc *p;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if (p->pid == pid)
+      return p;
+  }
+  panic("didn't find pid");
 }

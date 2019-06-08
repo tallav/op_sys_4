@@ -540,11 +540,13 @@ dirlookup(struct inode *dp, char *name, uint *poff)
     }
     if(de.inum == 0)
       continue;
+    cprintf("in dirlookup func, name = %s, de.name = %s \n",name, de.name);
     if(namecmp(name, de.name) == 0){
       // entry matches path element
       if(poff)
         *poff = off;
       inum = de.inum;
+      cprintf("in dirlookup func, de.inum = %d \n", de.inum);
       ip = iget(dp->dev, inum);
       if (ip->valid == 0 && dp->type == T_DEV && devsw[dp->major].iread) {
         devsw[dp->major].iread(dp, ip);
@@ -641,6 +643,7 @@ namex(char *path, int nameiparent, char *name)
     ip = idup(myproc()->cwd);
 
   while((path = skipelem(path, name)) != 0){
+    cprintf("namex: path=%s,name=%s \n",path, name);
     ilock(ip);
     if(ip->type != T_DIR && !IS_DEV_DIR(ip)){
       iunlockput(ip);
