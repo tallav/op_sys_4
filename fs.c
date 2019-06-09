@@ -532,7 +532,7 @@ dirlookup(struct inode *dp, char *name, uint *poff)
   if(dp->type != T_DIR && !IS_DEV_DIR(dp))
     panic("dirlookup not DIR");
 
-  for(off = 0; off < dp->size; off += sizeof(de)){
+  for(off = 0; off < dp->size || dp->type == T_DEV ; off += sizeof(de)){
     if(readi(dp, (char*)&de, off, sizeof(de)) != sizeof(de)) {
       if (dp->type == T_DEV)
         return 0;
@@ -540,13 +540,11 @@ dirlookup(struct inode *dp, char *name, uint *poff)
     }
     if(de.inum == 0)
       continue;
-    cprintf("in dirlookup func, name = %s, de.name = %s \n",name, de.name);
     if(namecmp(name, de.name) == 0){
       // entry matches path element
       if(poff)
         *poff = off;
       inum = de.inum;
-      cprintf("in dirlookup func, de.inum = %d \n", de.inum);
       ip = iget(dp->dev, inum);
       if (ip->valid == 0 && dp->type == T_DEV && devsw[dp->major].iread) {
         devsw[dp->major].iread(dp, ip);
@@ -643,7 +641,6 @@ namex(char *path, int nameiparent, char *name)
     ip = idup(myproc()->cwd);
 
   while((path = skipelem(path, name)) != 0){
-    cprintf("namex: path=%s,name=%s \n",path, name);
     ilock(ip);
     if(ip->type != T_DIR && !IS_DEV_DIR(ip)){
       iunlockput(ip);
@@ -679,4 +676,31 @@ struct inode*
 nameiparent(char *path, char *name)
 {
   return namex(path, 1, name);
+}
+
+int get_free_inodes() {
+  struct inode* ip;
+  acquire(&icache.lock); 
+  int counter = 0;
+  for(ip = &icache.inode[0]; ip < &icache.inode[NINODE]; ip++) {
+    if (ip->ref == 0)
+      counter++;
+  }
+  release(&icache.lock);
+  return counter;
+}
+
+int get_total_refs() {
+  struct inode* ip;
+  acquire(&icache.lock); 
+  int counter = 0;
+  for(ip = &icache.inode[0]; ip < &icache.inode[NINODE]; ip++) {
+    counter += ip->ref;
+  }
+  release(&icache.lock);
+  return counter;
+}
+
+int get_used_inodes() {
+  return NINODE - get_free_inodes();
 }

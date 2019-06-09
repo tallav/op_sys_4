@@ -52,6 +52,9 @@ struct inode*   nameiparent(char*, char*);
 int             readi(struct inode*, char*, uint, uint);
 void            stati(struct inode*, struct stat*);
 int             writei(struct inode*, char*, uint, uint);
+int             get_free_inodes();
+int             get_total_refs();
+int             get_used_inodes();
 
 // ide.c
 void            ideinit(void);
@@ -120,6 +123,8 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
+struct proc*    find_proc_by_pid(int pid);
+
 
 // procfs.c
 void            procfsinit(void);
