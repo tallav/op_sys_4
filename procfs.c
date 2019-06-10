@@ -36,7 +36,7 @@ struct dirent fd_dir_entries[NOFILE];
 int 
 procfsisdir(struct inode *ip) 
 {
-  //cprintf("in func procfsISDIR: ip->minor=%d ip->inum=%d\n", ip->minor, ip->inum);
+  //cprintf("in func procfsisdir: ip->minor=%d ip->inum=%d\n", ip->minor, ip->inum);
   if (ip->minor == 0 || (ip->minor == 1 && (ip->inum != 500 || ip->inum != 501 || ip->inum != 502)))
 		return 1;
 	else 
@@ -137,29 +137,41 @@ read_path_level_0(struct inode *ip, char *dst, int off, int n)
   return n;
 }
 
+char currQueue[256] = {0};
+
 char*
 get_string_working_blocks(struct tempbuf *tb)
 {
-  return "abc";
+  struct tempbuf *temp = tb;
+  strcpy(currQueue, "Working blocks: ");
+  while(temp){
+    strcpy(currQueue + strlen(currQueue), "(");
+	  itoa(currQueue + strlen(currQueue), temp->device_num);
+    strcpy(currQueue + strlen(currQueue), ",");
+    itoa(currQueue + strlen(currQueue), temp->block_num);
+    strcpy(currQueue + strlen(currQueue), ");");
+    temp = temp->next;
+  }
+  return currQueue;
 }
 
+// functions implementation in ide.c
 int 
 read_file_ideinfo(struct inode* ip, char *dst, int off, int n) 
 {
+  cprintf("in func read_file_ideinfo\n");
   if (n == sizeof(struct dirent))
 		return 0;
 
 	char data[256] = {0};
 
 	strcpy(data, "Waiting operations: ");
-  /*
-	itoa(data + strlen(data), get_free_fds());
+	itoa(data + strlen(data), get_waiting_ops());
 	strcpy(data + strlen(data), "\nRead waiting operations: ");
-	itoa(data + strlen(data), get_unique_inode_fds());
+	itoa(data + strlen(data), get_read_wait_ops());
 	strcpy(data + strlen(data), "\nWrite waiting operations: ");
-	itoa(data + strlen(data), get_writeable_fds());
-  */
-  strcpy(data + strlen(data), "\nWorking blocks: ");
+	itoa(data + strlen(data), get_write_wait_ops());
+  strcpy(data + strlen(data), "\n");
   char* workBlocks = get_string_working_blocks(get_working_blocks());
   strcpy(data + strlen(data), workBlocks);
 	strcpy(data + strlen(data), "\n");
@@ -170,6 +182,7 @@ read_file_ideinfo(struct inode* ip, char *dst, int off, int n)
 	return n;
 }
 
+// functions implementation in file.c
 int 
 read_file_filestat(struct inode* ip, char *dst, int off, int n) 
 {
@@ -181,7 +194,7 @@ read_file_filestat(struct inode* ip, char *dst, int off, int n)
 	strcpy(data, "Free fds: ");
 	itoa(data + strlen(data), get_free_fds());
 	strcpy(data + strlen(data), "\nUnique inode fds: ");
-	//itoa(data + strlen(data), get_unique_inode_fds());
+	itoa(data + strlen(data), get_unique_inode_fds()); // TODO
 	strcpy(data + strlen(data), "\nWriteable fds: ");
 	itoa(data + strlen(data), get_writeable_fds());
   strcpy(data + strlen(data), "\nReadable fds: ");

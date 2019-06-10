@@ -173,16 +173,41 @@ get_waiting_ops(void)
   return 0;
 }
 
+// TODO: check what is IDE_CMD_RDMUL flag
 int
 get_read_wait_ops(void)
 {
-  return 0;
+  int counter = 0;
+  struct buf *b;
+
+  acquire(&idelock);
+  for(b = idequeue; b != 0; b = b->next){
+    if(b->flags & IDE_CMD_READ){
+      counter++;
+    }
+    /*if(b->flags & IDE_CMD_RDMUL){
+      counter++;
+    }*/
+  }
+  release(&idelock);
+  return counter;
 }
 
+// TODO: check what is IDE_CMD_WRMUL flag
 int
 get_write_wait_ops(void)
 {
-  return 0;
+  int counter = 0;
+  struct buf *b;
+
+  acquire(&idelock);
+  for(b = idequeue; b != 0; b = b->next){
+    if(b->flags & IDE_CMD_WRITE){
+      counter++;
+    }
+  }
+  release(&idelock);
+  return counter;
 }
 
 struct tempbuf headLink = {0,0,0};
@@ -191,21 +216,25 @@ struct tempbuf *head = &headLink; // list head
 struct tempbuf *
 get_working_blocks(void)
 {
-  struct tempbuf *temp = head;
+  struct tempbuf *tempLink = head;
+  struct buf *b;
+
   acquire(&idelock);
-  struct buf *link;
-  for(link = idequeue; link != 0; link=link->next){ // go over the idequeue and create a tempbuf list
-    if(temp->device_num == 0 && temp->block_num == 0){
-      temp->device_num = link->dev;
-      temp->block_num = link->blockno;
-      temp->next = 0;
+  for(b = idequeue; b != 0; b = b->next){ // go over the idequeue and create a tempbuf list
+    if(tempLink->device_num == 0 && tempLink->block_num == 0){
+      tempLink->device_num = b->dev;
+      tempLink->block_num = b->blockno;
+      tempLink->next = 0;
+      cprintf("device_num=%d, block_num=%d\n", tempLink->device_num, tempLink->block_num);
+      char x[3] = "abc";
+      cprintf(x);
     } else {
-      struct tempbuf newlink = {0,0,0};
-      newlink.device_num = link->dev;
-      newlink.block_num = link->blockno;
-      newlink.next = 0;
-      temp->next = &newlink;
-      temp = temp->next;
+      struct tempbuf newLink = {0,0,0};
+      newLink.device_num = b->dev;
+      newLink.block_num = b->blockno;
+      newLink.next = 0;
+      tempLink->next = &newLink;
+      tempLink = tempLink->next;
     }
   }
   release(&idelock);
