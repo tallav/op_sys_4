@@ -155,3 +155,89 @@ filewrite(struct file *f, char *addr, int n)
   panic("filewrite");
 }
 
+// functions for filestat
+int
+get_free_fds(void)
+{
+  struct file *f;
+  int counter = 0;
+
+  acquire(&ftable.lock);
+  for(f = ftable.file; f < ftable.file + NFILE; f++){
+    if(f->ref == 0){
+      counter++;
+    }
+  }
+  release(&ftable.lock);
+  return counter;
+}
+
+// TODO:
+int
+get_unique_inode_fds(void)
+{
+  return 0;
+}
+
+int
+get_writeable_fds(void)
+{
+  struct file *f;
+  int counter = 0;
+
+  acquire(&ftable.lock);
+  for(f = ftable.file; f < ftable.file + NFILE; f++){
+    if(f->writable){
+      counter++;
+    }
+  }
+  release(&ftable.lock);
+  return counter;
+}
+
+int
+get_readable_fds(void)
+{
+  struct file *f;
+  int counter = 0;
+
+  acquire(&ftable.lock);
+  for(f = ftable.file; f < ftable.file + NFILE; f++){
+    if(f->readable){
+      counter++;
+    }
+  }
+  release(&ftable.lock);
+  return counter;
+}
+
+int
+get_total_refs(void)
+{
+  struct file *f;
+  int counter = 0;
+
+  acquire(&ftable.lock);
+  for(f = ftable.file; f < ftable.file + NFILE; f++){
+    counter = counter + f->ref;
+  }
+  release(&ftable.lock);
+  return counter;
+}
+
+// TODO: check if pipes also counted
+int
+get_used_fds(void)
+{
+  struct file *f;
+  int counter = 0;
+
+  acquire(&ftable.lock);
+  for(f = ftable.file; f < ftable.file + NFILE; f++){
+    if(f->type == FD_INODE){
+      counter++;
+    }
+  }
+  release(&ftable.lock);
+  return counter;
+}

@@ -163,6 +163,51 @@ iderw(struct buf *b)
     sleep(b, &idelock);
   }
 
-
   release(&idelock);
+}
+
+// functions for ideinfo
+int
+get_waiting_ops(void)
+{
+  return 0;
+}
+
+int
+get_read_wait_ops(void)
+{
+  return 0;
+}
+
+int
+get_write_wait_ops(void)
+{
+  return 0;
+}
+
+struct tempbuf headLink = {0,0,0};
+struct tempbuf *head = &headLink; // list head
+
+struct tempbuf *
+get_working_blocks(void)
+{
+  struct tempbuf *temp = head;
+  acquire(&idelock);
+  struct buf *link;
+  for(link = idequeue; link != 0; link=link->next){ // go over the idequeue and create a tempbuf list
+    if(temp->device_num == 0 && temp->block_num == 0){
+      temp->device_num = link->dev;
+      temp->block_num = link->blockno;
+      temp->next = 0;
+    } else {
+      struct tempbuf newlink = {0,0,0};
+      newlink.device_num = link->dev;
+      newlink.block_num = link->blockno;
+      newlink.next = 0;
+      temp->next = &newlink;
+      temp = temp->next;
+    }
+  }
+  release(&idelock);
+  return head;
 }

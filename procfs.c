@@ -7,6 +7,7 @@
 #include "sleeplock.h"
 #include "fs.h"
 #include "file.h"
+#include "buf.h"
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
@@ -136,10 +137,37 @@ read_path_level_0(struct inode *ip, char *dst, int off, int n)
   return n;
 }
 
+char*
+get_string_working_blocks(struct tempbuf *tb)
+{
+  return "abc";
+}
+
 int 
 read_file_ideinfo(struct inode* ip, char *dst, int off, int n) 
 {
-  return 0;
+  if (n == sizeof(struct dirent))
+		return 0;
+
+	char data[256] = {0};
+
+	strcpy(data, "Waiting operations: ");
+  /*
+	itoa(data + strlen(data), get_free_fds());
+	strcpy(data + strlen(data), "\nRead waiting operations: ");
+	itoa(data + strlen(data), get_unique_inode_fds());
+	strcpy(data + strlen(data), "\nWrite waiting operations: ");
+	itoa(data + strlen(data), get_writeable_fds());
+  */
+  strcpy(data + strlen(data), "\nWorking blocks: ");
+  char* workBlocks = get_string_working_blocks(get_working_blocks());
+  strcpy(data + strlen(data), workBlocks);
+	strcpy(data + strlen(data), "\n");
+
+	if (off + n > strlen(data))
+		n = strlen(data) - off;
+	memmove(dst, (char*)(&data) + off, n);
+	return n;
 }
 
 int 
@@ -151,19 +179,17 @@ read_file_filestat(struct inode* ip, char *dst, int off, int n)
 	char data[256] = {0};
 
 	strcpy(data, "Free fds: ");
-	itoa(data + strlen(data), get_free_inodes());
-  /*
+	itoa(data + strlen(data), get_free_fds());
 	strcpy(data + strlen(data), "\nUnique inode fds: ");
-	itoa(data + strlen(data), get_unique_inode_fds());
+	//itoa(data + strlen(data), get_unique_inode_fds());
 	strcpy(data + strlen(data), "\nWriteable fds: ");
 	itoa(data + strlen(data), get_writeable_fds());
   strcpy(data + strlen(data), "\nReadable fds: ");
 	itoa(data + strlen(data), get_readable_fds());
-  */
   strcpy(data + strlen(data), "\nRefs per fds: ");
 	itoa(data + strlen(data), get_total_refs());
 	strcpy(data + strlen(data), " / ");
-	itoa(data + strlen(data), get_used_inodes());
+	itoa(data + strlen(data), get_used_fds());
 	strcpy(data + strlen(data), "\n");
 
 	if (off + n > strlen(data))
@@ -270,10 +296,8 @@ read_path_level_2(struct inode *ip, char *dst, int off, int n)
   switch (ip->inum/100) {
     case 7:
       return read_procfs_name(ip, dst, off, n);
-      break;
     case 8:
       return read_procfs_status(ip, dst, off, n);
-      break;
 	}
 	return 0;
 }

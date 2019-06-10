@@ -8,6 +8,12 @@ struct file {
   uint off;
 };
 
+int get_free_fds(void);
+int get_unique_inode_fds(void);
+int get_writeable_fds(void);
+int get_readable_fds(void);
+int get_total_refs(void);
+int get_used_fds(void);
 
 // in-memory copy of an inode
 struct inode {
