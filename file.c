@@ -67,6 +67,11 @@ fileclose(struct file *f)
   }
   ff = *f;
   f->ref = 0;
+  /*
+  if(f->type == FD_INODE){
+    procfs_remove_inode(f->ip);    
+  }
+  */
   f->type = FD_NONE;
   release(&ftable.lock);
 

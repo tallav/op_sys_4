@@ -18,20 +18,25 @@ char* strcpy(char *s, const char *t);
 int atoi(const char *s);
 void itoa(char s[], int n);
 
-#define MAX_PROCESSES 64
-
 struct process_entry {
 	int pid;
 	int used;
 };
 
-struct process_entry process_entries[MAX_PROCESSES];
+struct inode_entry {
+	struct inode *inode;
+	int used;
+};
 
-struct dirent dir_entries[MAX_PROCESSES+2];
+struct process_entry process_entries[NPROC];
+
+struct dirent dir_entries[NPROC];
 
 struct dirent subdir_entries[2];
 
-struct dirent fd_dir_entries[NOFILE];
+struct inode_entry inode_entries[NINODE];
+
+struct dirent inodeinfo_dir_entries[NINODE];
 
 int 
 procfsisdir(struct inode *ip) 
@@ -66,15 +71,19 @@ procfsiread(struct inode* dp, struct inode *ip)
 int
 procfsread(struct inode *ip, char *dst, int off, int n) 
 {
-  //cprintf("in func procfsread , minor= %d \n",ip->minor);
+  //cprintf("in func procfsread , minor=%d\n",ip->minor);
   switch (ip->minor){
     case 0:
+      //cprintf("case 0\n");
       return read_path_level_0(ip,dst,off,n);
     case 1:
+      //cprintf("case 1\n");
       return read_path_level_1(ip,dst,off,n);
     case 2:
+      cprintf("case 2\n");
       return read_path_level_2(ip,dst,off,n);
     case 3:
+      cprintf("case 3\n");
       return read_path_level_3(ip,dst,off,n);
     default:
       cprintf("procfsread minor: %d", ip->minor);
@@ -106,6 +115,7 @@ procfsinit(void)
 void 
 update_dir_entries(int inum) 
 {
+  //cprintf("in func update_dir_entries, inum=%d\n",inum);
 	memset(dir_entries, sizeof(dir_entries), 0);
 
   memmove(&dir_entries[0].name, "ideinfo", 8);
@@ -117,13 +127,30 @@ update_dir_entries(int inum)
   dir_entries[2].inum = 502;
 
   int j = 3;
-    for (int i = 0; i < MAX_PROCESSES; i++) {
+    for (int i = 0; i < NPROC; i++) {
 		if (process_entries[i].used) {
 			itoa(dir_entries[j].name, process_entries[i].pid);
 			dir_entries[j].inum = 600 + process_entries[i].pid;
 			j++;
 		}
 	}
+}
+
+void 
+update_inode_entries(int inum) 
+{
+  //cprintf("in func update_inode_entries, inum=%d\n",inum);
+	memset(inodeinfo_dir_entries, sizeof(inodeinfo_dir_entries), 0);
+  /* just a test
+  memmove(&inodeinfo_dir_entries[0].name, "test", 8);
+  inodeinfo_dir_entries[0].inum = 15;
+  */
+  for (int i = 0; i < NINODE; i++) {
+    if (inode_entries[i].used) {
+      itoa(inodeinfo_dir_entries[i].name, inode_entries[i].inode->inum);
+      inodeinfo_dir_entries[i].inum = 900 + inode_entries[i].inode->inum;
+    }
+  }
 }
 
 int 
@@ -211,10 +238,16 @@ read_file_filestat(struct inode* ip, char *dst, int off, int n)
 	return n;
 }
 
+// like level 0
 int 
 read_file_inodeinfo(struct inode* ip, char *dst, int off, int n) 
 {
-  return 0;
+  //cprintf("in func read_path_level_0, ip->inum=%d\n",ip->inum);
+  update_inode_entries(ip->inum);
+  if (off + n > sizeof(inodeinfo_dir_entries))
+      n = sizeof(inodeinfo_dir_entries) - off;
+  memmove(dst, (char*)(&inodeinfo_dir_entries) + off, n);
+  return n;
 }
 
 int 
@@ -237,6 +270,9 @@ int
 read_path_level_1(struct inode *ip, char *dst, int off, int n)
 {
   //cprintf("in func read_path_level_1, ip->inum=%d \n",ip->inum);
+  if(ip->inum > 900){
+
+  }
   switch (ip->inum) {
     case 500:
       return read_file_ideinfo(ip, dst, off, n);
@@ -302,6 +338,24 @@ read_procfs_name(struct inode* ip, char *dst, int off, int n)
   return n;
 }
 
+// TODO:
+int 
+read_inodeinfo_file(struct inode* ip, char *dst, int off, int n) 
+{
+  if (n == sizeof(struct dirent))
+		return 0;
+
+	char data[256] = {0};
+
+	strcpy(data, "Free fds: ");
+	strcpy(data + strlen(data), "\n");
+
+	if (off + n > strlen(data))
+		n = strlen(data) - off;
+	memmove(dst, (char*)(&data) + off, n);
+	return n;
+}
+
 int 
 read_path_level_2(struct inode *ip, char *dst, int off, int n)
 {
@@ -311,7 +365,12 @@ read_path_level_2(struct inode *ip, char *dst, int off, int n)
       return read_procfs_name(ip, dst, off, n);
     case 8:
       return read_procfs_status(ip, dst, off, n);
+    case 9:
+      return read_inodeinfo_file(ip, dst, off, n);
+    default:
+      cprintf("level 2 no case for inum=%d\n", ip->inum);
 	}
+  
 	return 0;
 }
 
@@ -322,11 +381,10 @@ read_path_level_3(struct inode *ip, char *dst, int off, int n)
 }
 
 void 
-procfs_add_proc(int pid, char* cwd) 
+procfs_add_proc(int pid) 
 {
   //cprintf("procfs_add_proc: %d\n", pid);
-	int i;
-	for (i = 0; i < MAX_PROCESSES; i++) {
+	for (int i = 0; i < NPROC; i++) {
 		if (!process_entries[i].used) {
 			process_entries[i].used = 1;
 			process_entries[i].pid = pid;
@@ -341,13 +399,55 @@ procfs_remove_proc(int pid)
 {
 	//cprintf("procfs_remove_proc: %d\n", pid);
 	int i;
-	for (i = 0; i < MAX_PROCESSES; i++) {
+	for (i = 0; i < NPROC; i++) {
 		if (process_entries[i].used && process_entries[i].pid == pid) {
 			process_entries[i].used = process_entries[i].pid = 0;
 			return;
 		}
 	}
 	panic("Failed to find process in procfs_remove_proc!");
+}
+
+// TODO: check if this array can have duplicates
+// ls error printed sometimes
+void 
+procfs_add_inode(struct inode *inode) 
+{
+  //cprintf("procfs_add_inode: %d\n", inode->inum);
+  int inodeExist = 0;
+  for (int i = 0; i < NINODE; i++) {
+		if (inode_entries[i].inode == inode) {
+      inodeExist = 1;
+			break;
+		}
+	}
+  if(inodeExist){
+    //cprintf("inode exist\n");
+    return;
+  }
+	for (int i = 0; i < NINODE; i++) {
+		if (!inode_entries[i].used) {
+      inode_entries[i].used = 1;
+			inode_entries[i].inode = inode;
+			return;
+		}
+	}
+	panic("Too many inodes in procfs!");
+}
+
+void
+procfs_remove_inode(struct inode *inode) 
+{
+	//cprintf("procfs_remove_inode: %d\n", inode->inum);
+	int i;
+	for (i = 0; i < NINODE; i++) {
+		if (inode_entries[i].used && inode_entries[i].inode == inode) {
+			inode_entries[i].used = 0;
+      inode_entries[i].inode = 0;
+			return;
+		}
+	}
+	panic("Failed to find inode in procfs_remove_inode!");
 }
 
 //-------------------------HELPERS---------------------------------------

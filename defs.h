@@ -128,8 +128,10 @@ struct proc*    find_proc_by_pid(int pid);
 
 // procfs.c
 void            procfsinit(void);
-void            procfs_add_proc(int pid, char* cwd);
+void            procfs_add_proc(int pid);
 void            procfs_remove_proc(int pid);
+void            procfs_add_inode(struct inode *inode);
+void            procfs_remove_inode(struct inode *inode);
 int             read_path_level_0(struct inode *ip, char *dst, int off, int n);
 int             read_path_level_1(struct inode *ip, char *dst, int off, int n);
 int             read_path_level_2(struct inode *ip, char *dst, int off, int n);
