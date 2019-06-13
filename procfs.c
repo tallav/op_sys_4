@@ -161,7 +161,7 @@ update_inode_entries(int inum)
   int j = 2;
   for (int i = 0; i < NINODE; i++) {
     if (inode_entries[i].used) {
-      int index = get_indoe_index(inode_entries[i].inode->inum);
+      int index = get_inode_index(inode_entries[i].inode->inum);
       itoa(inodeinfo_dir_entries[j].name, index);
       inodeinfo_dir_entries[j].inum = 900 + index;
       j++;
