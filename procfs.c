@@ -28,11 +28,13 @@ struct inode_entry {
 	int used;
 };
 
+#define ROOT_INUM 1;
+
 struct process_entry process_entries[NPROC];
 
-struct dirent dir_entries[NPROC];
+struct dirent dir_entries[NPROC+2]; // +2 for curr and parent directory
 
-struct dirent subdir_entries[2];
+struct dirent subdir_entries[4];
 
 struct inode_entry inode_entries[NINODE];
 
@@ -42,7 +44,7 @@ int
 procfsisdir(struct inode *ip) 
 {
   //cprintf("in func procfsisdir: ip->minor=%d ip->inum=%d\n", ip->minor, ip->inum);
-  if (ip->minor == 0 || (ip->minor == 1 && (ip->inum != 500 || ip->inum != 501 || ip->inum != 502)))
+  if (ip->minor == 0 || (ip->minor == 1 && (ip->inum != 500 || ip->inum != 501)))
 		return 1;
 	else 
     return 0;
@@ -106,10 +108,14 @@ procfsinit(void)
   devsw[PROCFS].read = procfsread;
 
   memset(&process_entries, sizeof(process_entries), 0);
-  memmove(subdir_entries[0].name, "name", 5);
-  memmove(subdir_entries[1].name, "status", 7);
-  subdir_entries[0].inum = 0;
-  subdir_entries[1].inum = 0;
+  memmove(subdir_entries[0].name, ".", 2);
+  memmove(subdir_entries[1].name, "..", 3);
+  memmove(subdir_entries[2].name, "name", 5);
+  memmove(subdir_entries[3].name, "status", 7);
+  subdir_entries[0].inum = 2;
+  subdir_entries[1].inum = 1;
+  subdir_entries[2].inum = 0; // temporary init- 
+  subdir_entries[3].inum = 0; // will be initialized in read_procfs_pid_dir
 }
 
 void 
@@ -118,15 +124,19 @@ update_dir_entries(int inum)
   //cprintf("in func update_dir_entries, inum=%d\n",inum);
 	memset(dir_entries, sizeof(dir_entries), 0);
 
-  memmove(&dir_entries[0].name, "ideinfo", 8);
-  memmove(&dir_entries[1].name, "filestat", 9);
-  memmove(&dir_entries[2].name, "inodeinfo", 10);
+  memmove(&dir_entries[0].name, ".", 2);
+  memmove(&dir_entries[1].name, "..", 3);
+  memmove(&dir_entries[2].name, "ideinfo", 8);
+  memmove(&dir_entries[3].name, "filestat", 9);
+  memmove(&dir_entries[4].name, "inodeinfo", 10);
 
-  dir_entries[0].inum = 500;
-  dir_entries[1].inum = 501;
-  dir_entries[2].inum = 502;
+  dir_entries[0].inum = inum;
+  dir_entries[1].inum = ROOT_INUM;
+  dir_entries[2].inum = 500;
+  dir_entries[3].inum = 501;
+  dir_entries[4].inum = 502;
 
-  int j = 3;
+  int j = 5;
     for (int i = 0; i < NPROC; i++) {
 		if (process_entries[i].used) {
 			itoa(dir_entries[j].name, process_entries[i].pid);
