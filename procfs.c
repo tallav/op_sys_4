@@ -152,11 +152,11 @@ update_inode_entries(int inum)
   //cprintf("in func update_inode_entries, inum=%d\n",inum);
 	memset(inodeinfo_dir_entries, sizeof(inodeinfo_dir_entries), 0);
 
-  memmove(&dir_entries[0].name, ".", 2);
-  memmove(&dir_entries[1].name, "..", 3);
+  memmove(&inodeinfo_dir_entries[0].name, ".", 2);
+  memmove(&inodeinfo_dir_entries[1].name, "..", 3);
   
-  dir_entries[0].inum = inum;
-  dir_entries[1].inum = ROOT_INUM;
+  inodeinfo_dir_entries[0].inum = inum;
+  inodeinfo_dir_entries[1].inum = ROOT_INUM;
 
   int j = 2;
   for (int i = 0; i < NINODE; i++) {
@@ -305,7 +305,7 @@ read_procfs_status(struct inode* ip, char *dst, int off, int n)
 {
   //cprintf("in func read_procfs_status, ip->inum=%d \n",ip->inum);
 	char status[250] = {0};
-	char szBuf[100] = {0};
+	//char szBuf[100] = {0};
 	char* procstate[6] = { "UNUSED", "EMBRYO", "SLEEPING", "RUNNABLE", "RUNNING", "ZOMBIE" };
 
 	int pid = ip->inum - 800;
@@ -313,9 +313,9 @@ read_procfs_status(struct inode* ip, char *dst, int off, int n)
 
   int size = strlen(procstate[p->state]);
   strcpy(status, procstate[p->state]);
-  status[size] = ' ';
-  itoa(szBuf, p->sz);
-  strcpy(status + size + 1, szBuf);
+  //status[size] = ' ';
+  //itoa(szBuf, p->sz);
+  //strcpy(status + size + 1, szBuf);
 
   status[strlen(status)] = '\n';
 
@@ -332,16 +332,16 @@ read_procfs_name(struct inode* ip, char *dst, int off, int n)
 {
   //cprintf("in func read_procfs_name, ip->inum=%d \n",ip->inum);
 	char name[250] = {0};
-	char szBuf[100] = {0};
+	//char szBuf[100] = {0};
 
 	int pid = ip->inum - 700;
   struct proc *p = find_proc_by_pid(pid);
 
   int size = strlen(p->name);
   strcpy(name, p->name);
-  name[size] = ' ';
-  itoa(szBuf, p->sz);
-  strcpy(name + size + 1, szBuf);
+  //name[size] = ' ';
+  //itoa(szBuf, p->sz);
+  //strcpy(name + size + 1, szBuf);
 
   name[strlen(name)] = '\n';
 
@@ -362,7 +362,23 @@ read_inodeinfo_file(struct inode* ip, char *dst, int off, int n)
 
 	char data[256] = {0};
 
-	strcpy(data, "Free fds: ");
+	strcpy(data, "Device: ");
+	itoa(data + strlen(data), ip->dev);
+	strcpy(data + strlen(data), "\nInode number: ");
+	itoa(data + strlen(data), ip->inum); // TODO
+	strcpy(data + strlen(data), "\nis valid: ");
+	itoa(data + strlen(data), ip->valid);
+  strcpy(data + strlen(data), "\ntype: ");
+	itoa(data + strlen(data), ip->type);
+  strcpy(data + strlen(data), "\nmajor minor: (");
+	itoa(data + strlen(data), ip->major);
+  strcpy(data + strlen(data), ", ");
+	itoa(data + strlen(data), ip->minor);
+  strcpy(data + strlen(data), ")");
+	strcpy(data + strlen(data), "\nhard links: ");
+	itoa(data + strlen(data), ip->ref);
+  strcpy(data + strlen(data), "\nblocks used: ");
+	// TODO: itoa(data + strlen(data), );
 	strcpy(data + strlen(data), "\n");
 
 	if (off + n > strlen(data))
