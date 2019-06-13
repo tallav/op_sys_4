@@ -82,7 +82,7 @@ procfsread(struct inode *ip, char *dst, int off, int n)
       //cprintf("case 1\n");
       return read_path_level_1(ip,dst,off,n);
     case 2:
-      cprintf("case 2\n");
+      //cprintf("case 2\n");
       return read_path_level_2(ip,dst,off,n);
     case 3:
       cprintf("case 3\n");
@@ -202,7 +202,7 @@ get_string_working_blocks(struct tempbuf *tb)
 int 
 read_file_ideinfo(struct inode* ip, char *dst, int off, int n) 
 {
-  cprintf("in func read_file_ideinfo\n");
+  //cprintf("in func read_file_ideinfo\n");
   if (n == sizeof(struct dirent))
 		return 0;
 
@@ -366,11 +366,16 @@ read_inodeinfo_file(struct inode* ip, char *dst, int off, int n)
 	strcpy(data, "Device: ");
 	itoa(data + strlen(data), ip->dev);
 	strcpy(data + strlen(data), "\nInode number: ");
-	itoa(data + strlen(data), ip->inum); // TODO
+	itoa(data + strlen(data), ip->inum); 
 	strcpy(data + strlen(data), "\nis valid: ");
 	itoa(data + strlen(data), ip->valid);
   strcpy(data + strlen(data), "\ntype: ");
-	itoa(data + strlen(data), ip->type);
+  if(ip->type == T_DIR)
+    strcpy(data + strlen(data), "DIR");
+  if(ip->type == T_FILE)
+    strcpy(data + strlen(data), "FILE");
+  if(ip->type == T_DEV)
+    strcpy(data + strlen(data), "DEV");
   strcpy(data + strlen(data), "\nmajor minor: (");
 	itoa(data + strlen(data), ip->major);
   strcpy(data + strlen(data), ", ");
@@ -379,7 +384,9 @@ read_inodeinfo_file(struct inode* ip, char *dst, int off, int n)
 	strcpy(data + strlen(data), "\nhard links: ");
 	itoa(data + strlen(data), ip->ref);
   strcpy(data + strlen(data), "\nblocks used: ");
-	// TODO: itoa(data + strlen(data), );
+	// TODO: 
+  if(ip->type == T_DEV)
+    itoa(data + strlen(data), 0);
 	strcpy(data + strlen(data), "\n");
 
 	if (off + n > strlen(data))
