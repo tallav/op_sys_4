@@ -264,11 +264,11 @@ int
 read_procfs_pid_dir(struct inode* ip, char *dst, int off, int n) 
 {
   //cprintf("in func read_procfs_pid_dir, ip->inum=%d \n",ip->inum);
-  struct dirent temp_entries[2];
+  struct dirent temp_entries[4];
 	memmove(&temp_entries, &subdir_entries, sizeof(subdir_entries));
 
-	temp_entries[0].inum = ip->inum + 100;
-	temp_entries[1].inum = ip->inum + 200;
+	temp_entries[2].inum = ip->inum + 100;
+	temp_entries[3].inum = ip->inum + 200;
 
 	if (off + n > sizeof(temp_entries))
 		n = sizeof(temp_entries) - off;
