@@ -677,3 +677,24 @@ nameiparent(char *path, char *name)
 {
   return namex(path, 1, name);
 }
+
+int
+get_indoe_index(int inum)
+{
+  struct inode *ip;
+  int index = -1;
+  int i = 0;
+
+  acquire(&icache.lock);
+
+  for(ip = &icache.inode[0]; ip < &icache.inode[NINODE]; ip++){
+    if(ip->inum == inum){
+      index = i;
+      release(&icache.lock);
+      return index;
+    }
+    i++;
+  }
+  release(&icache.lock);
+  return index;
+}
