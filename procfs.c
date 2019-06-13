@@ -313,7 +313,7 @@ read_procfs_status(struct inode* ip, char *dst, int off, int n)
 
   int size = strlen(procstate[p->state]);
   strcpy(status, procstate[p->state]);
-  //status[size] = ' ';
+  status[size] = ' ';
   //itoa(szBuf, p->sz);
   //strcpy(status + size + 1, szBuf);
 
@@ -339,7 +339,7 @@ read_procfs_name(struct inode* ip, char *dst, int off, int n)
 
   int size = strlen(p->name);
   strcpy(name, p->name);
-  //name[size] = ' ';
+  name[size] = ' ';
   //itoa(szBuf, p->sz);
   //strcpy(name + size + 1, szBuf);
 
