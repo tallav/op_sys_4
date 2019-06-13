@@ -38,7 +38,7 @@ struct dirent subdir_entries[4];
 
 struct inode_entry inode_entries[NINODE];
 
-struct dirent inodeinfo_dir_entries[NINODE];
+struct dirent inodeinfo_dir_entries[NINODE+2];
 
 int 
 procfsisdir(struct inode *ip) 
@@ -137,7 +137,7 @@ update_dir_entries(int inum)
   dir_entries[4].inum = 502;
 
   int j = 5;
-    for (int i = 0; i < NPROC; i++) {
+  for (int i = 0; i < NPROC; i++) {
 		if (process_entries[i].used) {
 			itoa(dir_entries[j].name, process_entries[i].pid);
 			dir_entries[j].inum = 600 + process_entries[i].pid;
@@ -151,14 +151,19 @@ update_inode_entries(int inum)
 {
   //cprintf("in func update_inode_entries, inum=%d\n",inum);
 	memset(inodeinfo_dir_entries, sizeof(inodeinfo_dir_entries), 0);
-  /* just a test
-  memmove(&inodeinfo_dir_entries[0].name, "test", 8);
-  inodeinfo_dir_entries[0].inum = 15;
-  */
+
+  memmove(&dir_entries[0].name, ".", 2);
+  memmove(&dir_entries[1].name, "..", 3);
+  
+  dir_entries[0].inum = inum;
+  dir_entries[1].inum = ROOT_INUM;
+
+  int j = 2;
   for (int i = 0; i < NINODE; i++) {
     if (inode_entries[i].used) {
-      itoa(inodeinfo_dir_entries[i].name, inode_entries[i].inode->inum);
-      inodeinfo_dir_entries[i].inum = 900 + inode_entries[i].inode->inum;
+      itoa(inodeinfo_dir_entries[j].name, inode_entries[i].inode->inum);
+      inodeinfo_dir_entries[j].inum = 900 + inode_entries[i].inode->inum;
+      j++;
     }
   }
 }
