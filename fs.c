@@ -679,7 +679,7 @@ nameiparent(char *path, char *name)
 }
 
 int
-get_indoe_index(int inum)
+get_indoe_index(uint inum)
 {
   struct inode *ip;
   int index = -1;
