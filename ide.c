@@ -170,10 +170,10 @@ iderw(struct buf *b)
 int
 get_waiting_ops(void)
 {
-  return 0;
+  return get_read_wait_ops() + get_write_wait_ops();
 }
 
-// TODO: check what is IDE_CMD_RDMUL flag
+// TODO: 
 int
 get_read_wait_ops(void)
 {
@@ -181,19 +181,16 @@ get_read_wait_ops(void)
   struct buf *b;
 
   acquire(&idelock);
-  for(b = idequeue; b != 0; b = b->next){
-    if(b->flags & IDE_CMD_READ){
+  for(b = idequeue; b != 0; b = b->qnext){
+    if(!(b->flags & B_VALID)){ // B_VALID bit is off - waiting to read
       counter++;
     }
-    /*if(b->flags & IDE_CMD_RDMUL){
-      counter++;
-    }*/
   }
   release(&idelock);
   return counter;
 }
 
-// TODO: check what is IDE_CMD_WRMUL flag
+// TODO: 
 int
 get_write_wait_ops(void)
 {
@@ -201,8 +198,8 @@ get_write_wait_ops(void)
   struct buf *b;
 
   acquire(&idelock);
-  for(b = idequeue; b != 0; b = b->next){
-    if(b->flags & IDE_CMD_WRITE){
+  for(b = idequeue; b != 0; b = b->qnext){
+    if(!(b->flags & B_VALID)){ // B_DIRTY bit is on - waiting to write
       counter++;
     }
   }
@@ -210,33 +207,21 @@ get_write_wait_ops(void)
   return counter;
 }
 
-struct tempbuf headLink = {0,0,0};
-struct tempbuf *head = &headLink; // list head
+uint currQueue[256] = {0};
 
-struct tempbuf *
+uint *
 get_working_blocks(void)
 {
-  struct tempbuf *tempLink = head;
+  int i = 0;
   struct buf *b;
 
   acquire(&idelock);
-  for(b = idequeue; b != 0; b = b->next){ // go over the idequeue and create a tempbuf list
-    if(tempLink->device_num == 0 && tempLink->block_num == 0){
-      tempLink->device_num = b->dev;
-      tempLink->block_num = b->blockno;
-      tempLink->next = 0;
-      cprintf("device_num=%d, block_num=%d\n", tempLink->device_num, tempLink->block_num);
-      char x[3] = "abc";
-      cprintf(x);
-    } else {
-      struct tempbuf newLink = {0,0,0};
-      newLink.device_num = b->dev;
-      newLink.block_num = b->blockno;
-      newLink.next = 0;
-      tempLink->next = &newLink;
-      tempLink = tempLink->next;
-    }
+  for(b = idequeue; b != 0; b = b->qnext){
+    currQueue[i] = b->dev;
+    currQueue[i+1] = b->blockno;
+    i = i+2;
   }
   release(&idelock);
-  return head;
+
+  return currQueue;
 }

@@ -162,8 +162,10 @@ update_inode_entries(int inum)
   for (int i = 0; i < NINODE; i++) {
     if (inode_entries[i].used) {
       int index = get_inode_index(inode_entries[i].inode->inum);
-      itoa(inodeinfo_dir_entries[j].name, index);
-      inodeinfo_dir_entries[j].inum = 900 + index;
+      if(index >= 0){ // if index==-1 it is not found in the open inode table (ichache)
+        itoa(inodeinfo_dir_entries[j].name, index);
+        inodeinfo_dir_entries[j].inum = 900 + index;
+      }
       j++;
     }
   }
@@ -180,22 +182,24 @@ read_path_level_0(struct inode *ip, char *dst, int off, int n)
   return n;
 }
 
-char currQueue[256] = {0};
+char currQueueData[256] = {0};
 
 char*
-get_string_working_blocks(struct tempbuf *tb)
+get_string_working_blocks(uint *q)
 {
-  struct tempbuf *temp = tb;
-  strcpy(currQueue, "Working blocks: ");
-  while(temp){
-    strcpy(currQueue + strlen(currQueue), "(");
-	  itoa(currQueue + strlen(currQueue), temp->device_num);
-    strcpy(currQueue + strlen(currQueue), ",");
-    itoa(currQueue + strlen(currQueue), temp->block_num);
-    strcpy(currQueue + strlen(currQueue), ");");
-    temp = temp->next;
+  strcpy(currQueueData, "Working blocks: ");
+
+  for(int i=0; i < 256; i = i+2){
+    if(q[i] != 0){
+      strcpy(currQueueData + strlen(currQueueData), "(");
+      itoa(currQueueData + strlen(currQueueData), q[i]);
+      strcpy(currQueueData + strlen(currQueueData), ",");
+      itoa(currQueueData + strlen(currQueueData), q[i+1]);
+      strcpy(currQueueData + strlen(currQueueData), ");");
+    }
   }
-  return currQueue;
+
+  return currQueueData;
 }
 
 // functions implementation in ide.c

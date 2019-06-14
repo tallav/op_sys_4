@@ -1,0 +1,7 @@
+init: starting sh
+$ 
+generalcheck34 test starting...
+
+------------------------------------
+ls: cannot open /proc/inodeinfo/../inodeinfo/./././../inodeinfo/..
+$ $ Finished Yehonatan Peleg Test, quiting...
