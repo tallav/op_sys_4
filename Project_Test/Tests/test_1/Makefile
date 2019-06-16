@@ -168,7 +168,7 @@ mkfs: mkfs.c fs.h
 
 UPROGS=\
 	_quitXV6\
-	_generalcheck34\
+	_OusertestsO\
 	_sh\
 	_init\
 	_ls\
@@ -283,11 +283,11 @@ _quitXV6: $(ULIB)
 	objdump -S _quitXV6 > quitXV6.asm
 	$(OBJDUMP) -t _quitXV6 | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > quitXV6.sym
 
-_generalcheck34: $(ULIB)
-	gcc -Werror -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie -c -o generalcheck34.o ./Project_Test/XV6_Tests/generalcheck34.c
-	ld -m elf_i386 -N -e main -Ttext 0 -o _generalcheck34 generalcheck34.o $(ULIB)
-	objdump -S _generalcheck34 > generalcheck34.asm
-	$(OBJDUMP) -t _generalcheck34 | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > generalcheck34.sym
+_OusertestsO: $(ULIB)
+	gcc -Werror -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie -c -o OusertestsO.o ./Project_Test/XV6_Tests/OusertestsO.c
+	ld -m elf_i386 -N -e main -Ttext 0 -o _OusertestsO OusertestsO.o $(ULIB)
+	objdump -S _OusertestsO > OusertestsO.asm
+	$(OBJDUMP) -t _OusertestsO | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > OusertestsO.sym
 
 _sh: $(ULIB)
 	gcc -Werror -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -fno-omit-frame-pointer -fno-stack-protector -fno-pie -no-pie -c -o sh.o sh.c
