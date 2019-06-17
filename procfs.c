@@ -388,9 +388,12 @@ read_inodeinfo_file(struct inode* ip, char *dst, int off, int n)
 	strcpy(data + strlen(data), "\nhard links: ");
 	itoa(data + strlen(data), ip->ref);
   strcpy(data + strlen(data), "\nblocks used: ");
-	// TODO: 
-  if(ip->type == T_DEV)
+  if(ip->type == T_DEV){
     itoa(data + strlen(data), 0);
+  } else {
+    int usedBlocks = ip->size / BSIZE;
+    itoa(data + strlen(data), usedBlocks);
+  }
 	strcpy(data + strlen(data), "\n");
 
 	if (off + n > strlen(data))
