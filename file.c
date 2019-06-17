@@ -177,11 +177,40 @@ get_free_fds(void)
   return counter;
 }
 
-// TODO:
+int uniqueInodes[NFILE];
+
 int
 get_unique_inode_fds(void)
 {
-  return 0;
+  struct file *f;
+  int counter = 0;
+
+  acquire(&ftable.lock);
+  for(f = ftable.file; f < ftable.file + NFILE; f++){
+    int index = inUniqueInodes(f->ip->inum);
+    if(index >= 0){
+      uniqueInodes[index] = f->ip->inum;
+      counter++;
+    }
+  }
+  release(&ftable.lock);
+  return counter;
+}
+
+// finds the inum in the uniqueInodes array and returmn -1 if it exist
+// if not, return the next free index in the array
+int
+inUniqueInodes(int inum)
+{
+  for(int i = 0; i < NFILE; i++){
+    if(uniqueInodes[i] == inum){ // inum found in the array
+      return -1;
+    }
+    if(uniqueInodes[i] == 0){ // empty spot
+      return i;
+    }
+  }
+  return -1; // no empty spot
 }
 
 int
@@ -230,7 +259,6 @@ get_total_refs(void)
   return counter;
 }
 
-// TODO: check if pipes also counted
 int
 get_used_fds(void)
 {

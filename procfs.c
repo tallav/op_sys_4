@@ -76,17 +76,11 @@ procfsread(struct inode *ip, char *dst, int off, int n)
   //cprintf("in func procfsread , minor=%d\n",ip->minor);
   switch (ip->minor){
     case 0:
-      //cprintf("case 0\n");
       return read_path_level_0(ip,dst,off,n);
     case 1:
-      //cprintf("case 1\n");
       return read_path_level_1(ip,dst,off,n);
     case 2:
-      //cprintf("case 2\n");
       return read_path_level_2(ip,dst,off,n);
-    case 3:
-      cprintf("case 3\n");
-      return read_path_level_3(ip,dst,off,n);
     default:
       cprintf("procfsread minor: %d", ip->minor);
       return -1;
@@ -241,7 +235,7 @@ read_file_filestat(struct inode* ip, char *dst, int off, int n)
 	strcpy(data, "Free fds: ");
 	itoa(data + strlen(data), get_free_fds());
 	strcpy(data + strlen(data), "\nUnique inode fds: ");
-	itoa(data + strlen(data), get_unique_inode_fds()); // TODO
+	itoa(data + strlen(data), get_unique_inode_fds()); 
 	strcpy(data + strlen(data), "\nWriteable fds: ");
 	itoa(data + strlen(data), get_writeable_fds());
   strcpy(data + strlen(data), "\nReadable fds: ");
@@ -358,7 +352,6 @@ read_procfs_name(struct inode* ip, char *dst, int off, int n)
   return n;
 }
 
-// TODO:
 int 
 read_inodeinfo_file(struct inode* ip, char *dst, int off, int n) 
 {
@@ -420,12 +413,6 @@ read_path_level_2(struct inode *ip, char *dst, int off, int n)
 	return 0;
 }
 
-int 
-read_path_level_3(struct inode *ip, char *dst, int off, int n)
-{
-  return 0; 
-}
-
 void 
 procfs_add_proc(int pid) 
 {
@@ -454,8 +441,6 @@ procfs_remove_proc(int pid)
 	panic("Failed to find process in procfs_remove_proc!");
 }
 
-// TODO: check if this array can have duplicates
-// ls error printed sometimes
 void 
 procfs_add_inode(struct inode *inode) 
 {

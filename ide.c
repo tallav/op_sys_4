@@ -173,7 +173,6 @@ get_waiting_ops(void)
   return get_read_wait_ops() + get_write_wait_ops();
 }
 
-// TODO: 
 int
 get_read_wait_ops(void)
 {
@@ -190,7 +189,6 @@ get_read_wait_ops(void)
   return counter;
 }
 
-// TODO: 
 int
 get_write_wait_ops(void)
 {
